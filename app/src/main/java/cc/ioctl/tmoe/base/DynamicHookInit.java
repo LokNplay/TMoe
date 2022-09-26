@@ -12,6 +12,7 @@ import cc.ioctl.tmoe.hook.func.AddSubItemChannel;
 import cc.ioctl.tmoe.hook.func.AntiAntiCopy;
 import cc.ioctl.tmoe.hook.func.AntiAntiForward;
 import cc.ioctl.tmoe.hook.func.ChannelDetailNumbers;
+import cc.ioctl.tmoe.hook.func.DatabaseCorruptionWarning;
 import cc.ioctl.tmoe.hook.func.DisablePremiumStickerAnimation;
 import cc.ioctl.tmoe.hook.func.DumpGroupMember;
 import cc.ioctl.tmoe.hook.func.EnableDebugMode;
@@ -77,6 +78,7 @@ public class DynamicHookInit {
                     ForceBlurChatAvailable.INSTANCE,
                     DisablePremiumStickerAnimation.INSTANCE,
                     DumpGroupMember.INSTANCE,
+                    DatabaseCorruptionWarning.INSTANCE,
             };
         }
         return sAllFunctionHooks;
@@ -102,6 +104,26 @@ public class DynamicHookInit {
             } catch (Exception | LinkageError e) {
                 Utils.loge(e);
             }
+        }
+    }
+
+    public static void allowEarlyInit(DynamicHook hook) {
+        try {
+            if (hook.isAvailable() && hook.isEnabledByUser()
+                    && !hook.isPreparationRequired() && !hook.isInitialized()) {
+                // initialize hook
+                if (!hook.initialize()) {
+                    Utils.logw("initialize failed: " + hook.getClass().getName());
+                    List<Throwable> errors = hook.getErrors();
+                    if (errors != null && !errors.isEmpty()) {
+                        for (Throwable error : errors) {
+                            Utils.loge(error);
+                        }
+                    }
+                }
+            }
+        } catch (Exception | LinkageError e) {
+            Utils.loge(e);
         }
     }
 }
